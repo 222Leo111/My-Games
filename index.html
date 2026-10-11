@@ -1,195 +1,652 @@
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>Little Worlds Online — Multiplayer Roleplay</title>
+<title>Cozy Sandbox</title>
 <style>
-:root{--panel:rgba(14,20,35,.91);--line:rgba(255,255,255,.18);--text:#f5f7ff;--accent:#8fe3c2}
-*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#8fc8ee;color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif}button,input{font:inherit}button{border:0;border-radius:12px;padding:11px 14px;background:var(--accent);color:#10251f;font-weight:750;cursor:pointer}button.secondary{background:#27344d;color:white;border:1px solid var(--line)}button:disabled{opacity:.45;cursor:not-allowed}
-#game{position:fixed;inset:0;display:none}canvas{display:block;width:100%;height:100%;touch-action:none}
-.panel{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:16px;box-shadow:0 12px 40px #07101f45;backdrop-filter:blur(12px)}
-#lobbyWrap{position:fixed;inset:0;display:grid;place-items:center;padding:16px;background:linear-gradient(145deg,#173a5b,#6fb9bb 65%,#c9e8ce);overflow:auto}
-#lobby{width:min(560px,100%)}h1{font-size:clamp(27px,6vw,42px);line-height:1.05;margin:0 0 8px}p{line-height:1.45;color:#d5deef}.sub{margin-top:0}label{display:block;font-size:13px;color:#c8d5e9;margin:12px 0 5px}input{width:100%;border-radius:11px;padding:12px;background:#0d1628;color:white;border:1px solid var(--line);outline:none}input:focus{border-color:var(--accent)}.row{display:flex;gap:8px}.row>*{flex:1;min-width:0}.notice{font-size:12px;color:#bac9df}.status{padding:10px 12px;background:#091426;border-radius:10px;font-size:13px;margin-top:12px;word-break:break-word}.hidden{display:none!important}
-#topbar{position:absolute;top:12px;left:12px;right:12px;display:flex;align-items:flex-start;justify-content:space-between;gap:8px;pointer-events:none}#topbar>*{pointer-events:auto}.chip{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:9px 12px;font-size:13px;backdrop-filter:blur(10px)}#roomInfo{max-width:70%;overflow-wrap:anywhere}#rightTools{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
-#chat{position:absolute;left:12px;bottom:12px;width:min(340px,calc(100% - 24px));max-height:38vh;display:flex;flex-direction:column;gap:6px;pointer-events:none}#messages{overflow:auto;max-height:22vh;display:flex;flex-direction:column;gap:5px;mask-image:linear-gradient(to bottom,transparent 0,#000 12%)}.msg{background:#101a2bd9;padding:7px 10px;border-radius:9px;font-size:13px;overflow-wrap:anywhere}.chatrow{display:flex;gap:5px;pointer-events:auto}.chatrow input{background:#101a2bf2;min-width:0}#chat .panel{padding:8px;pointer-events:auto}
-#mobileControls{position:absolute;inset:auto 0 0;height:190px;pointer-events:none;display:none}.joy{position:absolute;left:22px;bottom:25px;width:118px;height:118px;border-radius:50%;background:#0b183a55;border:2px solid #ffffff70;pointer-events:auto;touch-action:none}.knob{position:absolute;width:48px;height:48px;left:33px;top:33px;border-radius:50%;background:#d8fff0cc;border:2px solid white;box-shadow:0 3px 12px #0004}.actionButtons{position:absolute;right:18px;bottom:28px;display:flex;gap:10px;align-items:flex-end;pointer-events:auto}.actionButtons button{width:68px;height:68px;border-radius:50%;padding:5px;background:#14253bdc;color:white;border:2px solid #ffffff88;font-size:12px}
-#toast{position:absolute;top:74px;left:50%;transform:translateX(-50%);background:#101a2be8;padding:9px 14px;border-radius:12px;font-size:13px;display:none;max-width:90%;text-align:center}
-@media (pointer:coarse){#mobileControls{display:block}#chat{bottom:202px;max-height:30vh}#messages{max-height:16vh}#rightTools button{padding:9px;font-size:12px}}
-</style>
-</head>
-<body>
-<div id="lobbyWrap"><div id="lobby" class="panel">
-<h1>🌿 Little Worlds Online</h1>
-<p class="sub">A tiny 3D hangout where you and your friends can walk around, chat, and roleplay together.</p>
-<label for="playerName">Your display name</label><input id="playerName" maxlength="18" placeholder="e.g. Haggis" value="Player">
-<div class="row" style="margin-top:14px"><button id="hostBtn">Create a world</button><button id="joinModeBtn" class="secondary">Join a friend</button></div>
-<div id="joinBox" class="hidden"><label for="roomCode">Host's world code / Peer ID</label><input id="roomCode" placeholder="Paste the host's code here"><button id="joinBtn" style="width:100%;margin-top:9px">Join world</button></div>
-<div id="lobbyStatus" class="status">Choose “Create a world” to host, or join a friend's world code.</div>
-<p class="notice">Online play uses PeerJS's public signaling service for connection setup. This demo has no accounts or private server; anyone with the host code may be able to join. Only share it with people you trust.</p>
+*{box-sizing:border-box;-webkit-user-select:none;user-select:none;touch-action:none}
+html,body{margin:0;height:100%;overflow:hidden;background:#101428;font:14px ui-rounded,system-ui,sans-serif;color:#fff}
+canvas{display:block}
+.btn{background:#1a1f3acc;border:1px solid #fff4;color:#fff;border-radius:14px;padding:10px 14px;font:inherit;font-size:16px}
+#top{position:fixed;top:8px;left:8px;right:8px;display:flex;justify-content:space-between;align-items:center}
+#status{padding:8px 12px;background:#1a1f3acc;border-radius:14px}
+#plist{position:fixed;top:48px;left:8px;background:#1a1f3aee;border-radius:12px;padding:8px 12px;font-size:13px;display:none;z-index:5;max-width:220px}
+#hint{position:fixed;top:56px;left:8px;background:#1a1f3a99;padding:6px 10px;border-radius:10px;font-size:12px;max-width:260px}
+#cross{position:fixed;left:50%;top:50%;width:8px;height:8px;margin:-4px;border:2px solid #fff9;border-radius:50%;pointer-events:none}
+#chat{position:fixed;left:8px;bottom:60px;width:min(340px,72vw)}
+#log{max-height:140px;overflow-y:auto;touch-action:pan-y;font-size:13px;text-shadow:0 1px 2px #000}
+#log div{background:#1a1f3a99;margin-top:2px;padding:3px 8px;border-radius:8px;user-select:text}
+#emo{display:flex;gap:4px;margin-top:4px}
+#emo .btn{padding:4px 8px;font-size:16px}
+#chatin{width:100%;margin-top:4px;padding:8px;border-radius:10px;border:1px solid #fff5;background:#000a;color:#fff;font-size:16px;user-select:text;display:none}
+#bar{position:fixed;bottom:8px;left:50%;transform:translateX(-50%);display:flex;gap:6px}
+.sw{width:34px;height:34px;border-radius:9px;border:3px solid #fff3}
+.sw.on{border-color:#fff;transform:translateY(-4px)}
+.lbl{position:fixed;transform:translate(-50%,-100%);text-align:center;pointer-events:none;font-size:12px;text-shadow:0 1px 2px #000;white-space:nowrap}
+.lbl b{display:block}
+.lbl i{display:none;background:#fffe;color:#111;font-style:normal;padding:3px 8px;border-radius:10px;margin-bottom:2px;max-width:200px;white-space:normal;text-shadow:none}
+#touch{display:none}
+body.mobile #touch{display:block}
+body.mobile #chat{bottom:230px}
+body.mobile #emo{display:none}
+#joy{position:fixed;left:20px;bottom:80px;width:120px;height:120px;border-radius:50%;background:#fff2;border:2px solid #fff4}
+#knob{position:absolute;left:38px;top:38px;width:40px;height:40px;border-radius:50%;background:#fff7}
+#acts{position:fixed;right:14px;bottom:80px;display:grid;grid-template-columns:repeat(2,64px);gap:8px}
+#acts .btn{padding:16px 0;text-align:center}
+#tube{position:fixed;inset:0;background:#000d;display:none;align-items:center;justify-content:center;z-index:9}
+#tube,#tube *{touch-action:pan-y}
+#tube .box{background:#1a1f3a;padding:14px;border-radius:18px;width:min(560px,96vw);max-height:94vh;max-height:94dvh;overflow:auto;display:grid;gap:8px;overscroll-behavior:contain}
+#tube video{width:100%;max-height:38vh;border-radius:12px;background:#000}
+#tube iframe{width:100%;aspect-ratio:16/9;border:0;border-radius:12px;background:#000}
+#tube .row{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+#tube input{flex:1;min-width:0;padding:8px;border-radius:8px;border:0;font-size:16px;user-select:text}
+#tube .btn{padding:6px 10px;font-size:14px}
+#tube .btn.on{background:#fff;color:#111}
+#tube .item{background:#ffffff14;border-radius:10px;padding:6px 8px;display:flex;gap:8px;align-items:center;justify-content:space-between}
+#tube .item div{min-width:0;overflow-wrap:anywhere;user-select:text}
+#tlist{display:grid;gap:4px;max-height:220px;overflow:auto}
+#set{position:fixed;inset:0;background:#000c;display:none;align-items:center;justify-content:center;z-index:9}
+#set,#set *{touch-action:pan-y}
+#set input[type=range]{touch-action:pan-x}
+#set .box{overscroll-behavior:contain;-webkit-overflow-scrolling:touch;background:#1a1f3a;padding:18px;border-radius:18px;width:min(360px,92vw);max-height:85vh;max-height:85dvh;overflow:auto;display:grid;gap:10px}
+#set label{display:grid;gap:4px;font-size:13px}
+#set input,#set select{padding:8px;border-radius:8px;border:0;font-size:16px;user-select:text;touch-action:auto}
+</style></head><body>
+<div id="top"><div id="status">Connecting…</div><div style="display:flex;gap:6px"><button class="btn" id="brec" title="Record">🔴</button><button class="btn" id="btube">📺</button><button class="btn" id="bset">⚙️</button></div></div>
+<div id="plist"></div><div id="hint"></div><div id="cross"></div>
+<div id="chat"><div id="log"></div>
+<div id="emo"><button class="btn">👋</button><button class="btn">😀</button><button class="btn">❤️</button><button class="btn">😂</button></div>
+<input id="chatin" maxlength="200" placeholder="Say something…"></div>
+<div id="bar"></div>
+<div id="touch"><div id="joy"><div id="knob"></div></div>
+<div id="acts"><button class="btn" id="bjump">⬆️</button><button class="btn" id="bchat">💬</button><button class="btn" id="bplace">➕</button><button class="btn" id="brem">➖</button></div></div>
+<div id="tube"><div class="box">
+<div class="row" style="justify-content:space-between"><b style="font-size:17px">📺 Cozy Tube</b><button class="btn" id="tclose">Close</button></div>
+<div class="row"><button class="btn" id="tup">⬆️ Upload video</button><button class="btn" id="trec">🔴 Record gameplay</button><input type="file" id="tfile" accept="video/*" hidden></div>
+<div id="tstat" style="font-size:13px;opacity:.9"></div>
+<div id="tnew" style="display:none;gap:8px"><video id="tprev" controls playsinline></video><div class="row"><input id="ttitle" maxlength="80" placeholder="Give it a title"><button class="btn" id="tgo">Post</button><button class="btn" id="tdis">Discard</button></div></div>
+<video id="tvid" controls playsinline style="display:none"></video>
+<div id="tinfo"></div>
+<div class="row"><button class="btn" id="ttab1">🎬 Videos</button><button class="btn" id="ttab2">💬 Comments</button></div>
+<div id="tlist"></div>
+<div class="row" id="tcrow"><input id="tcin" maxlength="200" placeholder="Add a comment…"><button class="btn" id="tpost">Post</button></div>
 </div></div>
-<div id="game"><div id="topbar"><div id="roomInfo" class="chip">🌎 Connecting…</div><div id="rightTools"><button id="copyBtn" class="secondary">Copy invite</button><button id="leaveBtn" class="secondary">Leave</button></div></div>
-<div id="toast"></div>
-<div id="chat"><div id="messages"></div><div class="panel"><div class="chatrow"><input id="chatInput" maxlength="180" placeholder="Say something…"><button id="sendBtn">Send</button></div></div></div>
-<div id="mobileControls"><div id="joy" class="joy"><div id="knob" class="knob"></div></div><div class="actionButtons"><button id="waveBtn">👋<br>Wave</button><button id="jumpBtn">⬆️<br>Jump</button></div></div>
-</div>
-<script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
-<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
-<script>
-(() => {
-const $=id=>document.getElementById(id);
-let peer=null, host=false, hostId="", myId="", myName="Player", connected=false, scene,camera,renderer,clock;
-let ground, player, players=new Map(), connections=new Map(), lastSend=0, keys={}, joy={x:0,y:0}, yaw=0, pitch=-0.18, jumping=0, jumpVel=0, waveUntil=0, anim=0;
-const lobbyStatus=$("lobbyStatus");
-window.addEventListener("error", e => {
- if($("lobbyWrap").style.display!=="none") status("Game startup error: "+(e.message||"unknown error")+". Check internet access and reload.");
-});
-function status(s){lobbyStatus.textContent=s}
-function toast(s){const t=$("toast");t.textContent=s;t.style.display="block";clearTimeout(toast.timer);toast.timer=setTimeout(()=>t.style.display="none",2600)}
-function safeName(s){return (s||"Player").trim().slice(0,18)||"Player"}
-function randomColor(){return [0x69c7ff,0xffa76d,0xe7a1ff,0x8ee2ad,0xffdc72,0xf28b9b][Math.floor(Math.random()*6)]}
-function startPeer(asHost, targetId){
- if(!window.Peer){status("The online networking script did not load. Open this file in Safari/Chrome with internet access, then reload.");return}
- if(!window.THREE){status("The 3D engine did not load. Check your internet connection, then reload.");return}
- host=asHost; myName=safeName($("playerName").value); $("playerName").value=myName;
- $("hostBtn").disabled=true; $("joinBtn").disabled=true;
- status(asHost ? "Creating your world… connecting to the online service." : "Joining your friend's world…");
+<div id="set"><div class="box"><h3 style="margin:0">Settings</h3>
+<label>Name<input id="sname" maxlength="16"></label>
+<label>Avatar color<input id="scol" type="color"></label>
+<label>Controls<select id="smode"><option value="auto">Auto-detect</option><option value="pc">PC (keyboard + mouse)</option><option value="mobile">Mobile (touch)</option><option value="pad">Controller</option></select></label>
+<label>Look sensitivity<input id="ssens" type="range" min=".3" max="2.5" step=".1"></label>
+<label>Shadows<select id="ssh"><option value="1">On</option><option value="0">Off (faster)</option></select></label>
+<label>View distance<input id="sfog" type="range" min="40" max="250" step="10"></label>
+<div style="display:flex;gap:8px"><button class="btn" id="ssave">Save and reload</button><button class="btn" id="sclose">Close</button></div></div></div>
 
- try{
-   peer=new Peer(undefined,{debug:1});
-   peer.on("open",id=>{
-     myId=id;
-     if(host){hostId=id; enterGame(); status("World created! Share your invite code.");}
-     else {hostId=targetId; status("Connecting to host…"); const c=peer.connect(targetId,{reliable:true}); wireConnection(c,true);}
-   });
-   peer.on("connection",c=>{if(host)wireConnection(c,false);});
-   peer.on("error",e=>{
-     const kind=e.type||"connection";
-     const detail=kind==="peer-unavailable"?"That host code could not be found. Ask your friend to create a world again and send the new code.":kind==="network"?"The online service could not be reached. Check internet access and try again.":kind==="server-error"?"The public signaling service is having trouble. Try again in a moment.":"Network error ("+kind+"): "+(e.message||"connection failed");
-     status(detail); $("hostBtn").disabled=false; $("joinBtn").disabled=false;
-   });
-   peer.on("disconnected",()=>{if(connected)toast("Connection to signaling service was interrupted.");});
- }catch(e){status("Could not start online play: "+e.message);$("hostBtn").disabled=$("joinBtn").disabled=false}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.4/peerjs.min.js"></script>
+<script>if(!window.Peer){document.write('<script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js"><\/script>')}</script>
+<script>
+const $ = id => document.getElementById(id);
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const PAL = [0xe8d9b5, 0xc0583f, 0x6b8f71, 0x4a7fb5, 0xe0b84c, 0x8a6bb0, 0x4a4a52, 0xf4f4f0];
+let S = { name: 'Guest' + (Math.random() * 900 + 100 | 0), color: '#ff9f5a', mode: 'auto', sens: 1, shadows: true, fog: 120 };
+try { Object.assign(S, JSON.parse(localStorage.getItem('cozy') || '{}')); } catch (e) {}
+
+// ---------- platform UI ----------
+let pad = false;
+function mode() {
+  if (S.mode !== 'auto') return S.mode;
+  if (pad) return 'pad';
+  return (matchMedia('(pointer:coarse)').matches || 'ontouchstart' in window) ? 'mobile' : 'pc';
 }
-$("hostBtn").onclick=()=>startPeer(true);
-$("joinModeBtn").onclick=()=>{$("joinBox").classList.toggle("hidden");$("roomCode").focus()};
-$("joinBtn").onclick=()=>{const id=$("roomCode").value.trim();if(!id){status("Paste your friend's invite code first.");return}startPeer(false,id)};
-$("roomCode").addEventListener("keydown",e=>{if(e.key==="Enter")$("joinBtn").click()});
-function wireConnection(c,isOutgoing){
- const timer=setTimeout(()=>{if(!c.open&& !connected){status("Still trying to connect. Check the host code and that the host is online.");}},9000);
- c.on("open",()=>{clearTimeout(timer);connections.set(c.peer,c);if(!host){connected=true;enterGame();}else {send(c,{type:"hello",id:myId,name:"Guest"});toast("A friend connected!");} 
-   if(host){send(c,{type:"world",hostId:hostId,players:[...players.values()].map(p=>({id:p.id,name:p.name,x:p.x,z:p.z,color:p.color}))});}
- });
- c.on("data",msg=>handleMessage(c,msg));
- c.on("close",()=>{connections.delete(c.peer);if(players.has(c.peer)){removePlayer(c.peer);broadcast({type:"left",id:c.peer});toast("A player left.");}});
- c.on("error",()=>{});
+function applyMode() {
+  const m = mode();
+  document.body.className = m;
+  $('hint').textContent = {
+    pc: 'T = Cozy Tube · WASD move · Space jump · Click to lock mouse · Left click place · Right click remove · Enter chat · 1-8 colors',
+    mobile: 'Left stick moves · Drag the right side to look · ➕ places, ➖ removes',
+    pad: 'Left stick move · Right stick look · A jump · RT place · LT remove'
+  }[m];
+  $('cross').style.display = m === 'mobile' ? 'block' : 'block';
 }
-function send(c,obj){try{if(c&&c.open)c.send(obj)}catch(e){}}
-function broadcast(obj,except){for(const [id,c] of connections){if(id!==except)send(c,obj)}}
-function handleMessage(c,m){
- if(!m||typeof m!=="object")return;
- if(host){
-  if(m.type==="hello"){const p=addPlayer(c.peer,safeName(m.name||"Friend"),randomColor());broadcast({type:"join",player:{id:p.id,name:p.name,x:p.x,z:p.z,color:p.color}},c.peer);send(c,{type:"world",hostId:hostId,players:[...players.values()].filter(p=>p.id!==c.peer).map(p=>({id:p.id,name:p.name,x:p.x,z:p.z,color:p.color}))});}
-  else if(m.type==="move"){const p=players.get(c.peer);if(p){p.x=clamp(m.x,-28,28);p.z=clamp(m.z,-28,28);p.yaw=m.yaw||0;p.wave=m.wave||0;broadcast({type:"move",player:{id:p.id,x:p.x,z:p.z,yaw:p.yaw,wave:p.wave}},c.peer);}}
-  else if(m.type==="chat"){broadcast({type:"chat",name:safeName(m.name),text:String(m.text||"").slice(0,180)});}
-  else if(m.type==="wave"){broadcast({type:"wave",id:c.peer});}
- }else{
-  if(m.type==="world"){hostId=m.hostId;for(const p of (m.players||[]))if(p.id!==myId)addPlayer(p.id,p.name,p.color,p.x,p.z);updateRoomInfo(); }
-  else if(m.type==="join"&&m.player){const p=m.player;if(p.id!==myId)addPlayer(p.id,p.name,p.color,p.x,p.z);}
-  else if(m.type==="left")removePlayer(m.id);
-  else if(m.type==="move"&&m.player){const p=m.player;if(p.id!==myId){let q=players.get(p.id);if(!q)q=addPlayer(p.id,"Friend",randomColor());q.x=p.x;q.z=p.z;q.yaw=p.yaw||0;q.wave=p.wave||0;}}
-  else if(m.type==="chat")addMessage(m.name,m.text);
-  else if(m.type==="wave")toast("👋 Someone waves!");
- }
+addEventListener('gamepadconnected', () => { pad = true; applyMode(); });
+applyMode();
+
+// ---------- three.js ----------
+const R = new THREE.WebGLRenderer({ antialias: true });
+R.setPixelRatio(Math.min(devicePixelRatio, 2));
+R.shadowMap.enabled = S.shadows;
+document.body.prepend(R.domElement);
+const scene = new THREE.Scene();
+scene.fog = new THREE.Fog(0x87ceeb, 20, S.fog);
+const cam = new THREE.PerspectiveCamera(65, 1, .1, 400);
+const hemi = new THREE.HemisphereLight(0xffffff, 0x446644, .6); scene.add(hemi);
+const sun = new THREE.DirectionalLight(0xfff2d6, 1);
+sun.castShadow = S.shadows; sun.shadow.mapSize.set(1024, 1024);
+const sc = sun.shadow.camera; sc.left = sc.bottom = -30; sc.right = sc.top = 30; sc.far = 150;
+scene.add(sun, sun.target);
+function resize() { R.setSize(innerWidth, innerHeight); cam.aspect = innerWidth / innerHeight; cam.updateProjectionMatrix(); }
+addEventListener('resize', resize); resize();
+
+const std = (c, o = {}) => new THREE.MeshStandardMaterial({ color: c, roughness: .9, ...o });
+const mk = (g, m, x = 0, y = 0, z = 0) => { const o = new THREE.Mesh(g, m); o.position.set(x, y, z); o.castShadow = o.receiveShadow = true; scene.add(o); return o; };
+const flat = o => { o.rotation.x = -Math.PI / 2; o.castShadow = false; return o; };
+const grass = flat(mk(new THREE.CircleGeometry(60, 64), std(0x5da04a)));
+flat(mk(new THREE.CircleGeometry(65, 64), std(0xe3d29a), 0, -.1, 0));
+const water = flat(mk(new THREE.CircleGeometry(600, 32), std(0x2a6fa8, { roughness: .2, metalness: .1, transparent: true, opacity: .85 }), 0, -.3, 0));
+
+// trees (seeded so everyone sees the same island)
+let seed = 7;
+const rnd = () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+const trunkG = new THREE.CylinderGeometry(.2, .3, 2, 6), leafG = new THREE.ConeGeometry(1.3, 3, 7), trunkM = std(0x6b4a2f), leafM = std(0x2f7d3a);
+for (let i = 0; i < 70; i++) {
+  const a = rnd() * 6.283, r = 10 + rnd() * 46, x = Math.cos(a) * r, z = Math.sin(a) * r, s = .8 + rnd() * .7;
+  mk(trunkG, trunkM, x, s, z).scale.setScalar(s);
+  mk(leafG, leafM, x, s * 3.2, z).scale.setScalar(s);
 }
-function clamp(v,a,b){return Math.max(a,Math.min(b,v))}
-function enterGame(){
- if(connected===false&&!host)connected=true;
- try {
-   init3D();
- } catch(err) {
-   $("lobbyWrap").style.display="grid"; $("game").style.display="none";
-   status("The 3D world could not start: "+err.message+". Reload the file and check that internet access is enabled.");
-   $("hostBtn").disabled=false; $("joinBtn").disabled=false; return;
- }
- $("lobbyWrap").style.display="none";$("game").style.display="block";
- player=makeAvatar(myId,myName,randomColor());player.position.set(0,0,0);scene.add(player);
- updateRoomInfo();addMessage("World","Welcome! Walk around and say hello.");
- if(host){const self={id:myId,name:myName,x:0,z:0,color:player.userData.color,yaw:0};players.set(myId,self);}
- if(!host){for(const c of connections.values())send(c,{type:"hello",id:myId,name:myName});}
+
+// blocks
+const blocks = new Map(), bG = new THREE.BoxGeometry(1, 1, 1), bM = PAL.map(c => std(c, { roughness: .7 }));
+const key = (x, y, z) => x + ',' + y + ',' + z;
+function setBlock(x, y, z, c) {
+  const k = key(x, y, z), o = blocks.get(k);
+  if (o) { scene.remove(o); blocks.delete(k); }
+  if (c != null) { const m = mk(bG, bM[c], x + .5, y + .5, z + .5); m.userData = { x, y, z, c }; blocks.set(k, m); }
 }
-function updateRoomInfo(){ $("roomInfo").textContent=(host?"🟢 Hosting":"🔗 Connected")+" · "+myName+" · "+(players.size+(player?1:0))+" here"+(host?" · Code: "+hostId:"");}
-function addPlayer(id,name,color,x=0,z=0){
- if(id===myId)return players.get(id);
- let p=players.get(id);if(p){p.name=name||p.name;return p}
- p={id,name:safeName(name),x:x||0,z:z||0,yaw:0,color:color||randomColor(),wave:0,mesh:null};
- players.set(id,p);if(scene){p.mesh=makeAvatar(id,p.name,p.color);p.mesh.position.set(p.x,0,p.z);scene.add(p.mesh);}
- updateRoomInfo();return p;
+
+// avatars + labels
+function avatar(color) {
+  const g = new THREE.Group(), m = std(color);
+  const b = new THREE.Mesh(new THREE.CylinderGeometry(.32, .32, .9, 12), m); b.position.y = .55;
+  const h = new THREE.Mesh(new THREE.SphereGeometry(.28, 16, 12), std(0xffe0c0)); h.position.y = 1.32;
+  const e = new THREE.Mesh(new THREE.BoxGeometry(.3, .08, .1), std(0x222222)); e.position.set(0, 1.36, -.26);
+  g.add(b, h, e); g.traverse(o => o.castShadow = true); scene.add(g); return g;
 }
-function removePlayer(id){const p=players.get(id);if(p&&p.mesh&&scene)scene.remove(p.mesh);players.delete(id);updateRoomInfo()}
-function makeAvatar(id,name,color){
- const g=new THREE.Group();g.userData.color=color;
- const mat=new THREE.MeshStandardMaterial({color,roughness:.8});
- const skin=new THREE.MeshStandardMaterial({color:0xffd2ae,roughness:.9});
- const dark=new THREE.MeshStandardMaterial({color:0x253047,roughness:1});
- const body=new THREE.Mesh(new THREE.CapsuleGeometry(.34,.62,4,8),mat);body.position.y=1.05;g.add(body);
- const head=new THREE.Mesh(new THREE.SphereGeometry(.29,16,12),skin);head.position.y=1.77;g.add(head);
- const hair=new THREE.Mesh(new THREE.SphereGeometry(.3,16,10,0,Math.PI*2,0,Math.PI*.58),dark);hair.position.y=1.88;g.add(hair);
- for(const s of [-1,1]){const arm=new THREE.Mesh(new THREE.CapsuleGeometry(.105,.48,3,6),skin);arm.position.set(s*.42,1.08,0);arm.rotation.z=-s*.15;g.add(arm);const leg=new THREE.Mesh(new THREE.CapsuleGeometry(.13,.45,3,6),dark);leg.position.set(s*.17,.38,0);g.add(leg)}
- const labelCanvas=document.createElement("canvas");labelCanvas.width=256;labelCanvas.height=64;const ctx=labelCanvas.getContext("2d");ctx.fillStyle="rgba(10,20,35,.82)";ctx.roundRect(4,8,248,48,16);ctx.fill();ctx.fillStyle="white";ctx.font="bold 25px system-ui";ctx.textAlign="center";ctx.fillText(name.slice(0,18),128,40);
- const tex=new THREE.CanvasTexture(labelCanvas);const sprite=new THREE.Sprite(new THREE.SpriteMaterial({map:tex,transparent:true,depthTest:false}));sprite.scale.set(2.2,.55,1);sprite.position.y=2.35;g.add(sprite);
- g.userData.baseColor=color;return g;
+const labels = {};
+function mkLabel(id, name) {
+  const d = document.createElement('div'); d.className = 'lbl'; d.innerHTML = '<i></i><b></b>';
+  d.querySelector('b').textContent = name; document.body.appendChild(d); labels[id] = d;
 }
-function init3D(){
- if(renderer)return;
- scene=new THREE.Scene();scene.background=new THREE.Color(0x8fd0ee);scene.fog=new THREE.Fog(0x8fd0ee,28,75);
- camera=new THREE.PerspectiveCamera(65,innerWidth/innerHeight,.1,150);
- renderer=new THREE.WebGLRenderer({antialias:true,alpha:false});renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;$("game").prepend(renderer.domElement);
- scene.add(new THREE.HemisphereLight(0xe6f8ff,0x55704a,2));
- const sun=new THREE.DirectionalLight(0xfff2d6,2.4);sun.position.set(-10,18,8);sun.castShadow=true;scene.add(sun);
- const grass=new THREE.MeshStandardMaterial({color:0x70bd77,roughness:1});ground=new THREE.Mesh(new THREE.PlaneGeometry(100,100),grass);ground.rotation.x=-Math.PI/2;ground.receiveShadow=true;scene.add(ground);
- const pathmat=new THREE.MeshStandardMaterial({color:0xd8c69a,roughness:1});const path=new THREE.Mesh(new THREE.PlaneGeometry(7,75),pathmat);path.rotation.x=-Math.PI/2;path.position.set(0,.015,-3);scene.add(path);
- // low-poly trees and cheerful houses
- for(let i=0;i<28;i++){let x=(i%2?1:-1)*(7+Math.random()*18),z=-30+Math.random()*60;tree(x,z)}
- house(-10,-9,0xe9a878);house(11,-17,0x9ac8ef);house(-12,16,0xe8b7ce);house(12,10,0xf2d875);
- // benches and lamps
- for(let z=-20;z<=24;z+=12){const pole=new THREE.Mesh(new THREE.CylinderGeometry(.07,.1,2.6,8),new THREE.MeshStandardMaterial({color:0x596779}));pole.position.set(4,1.3,z);scene.add(pole);const bulb=new THREE.Mesh(new THREE.SphereGeometry(.23,10,8),new THREE.MeshStandardMaterial({color:0xfff2b4,emissive:0xffd66d,emissiveIntensity:.4}));bulb.position.set(4,2.65,z);scene.add(bulb)}
- clock=new THREE.Clock();window.addEventListener("resize",resize);animate();
+function say(id, text) {
+  const d = labels[id]; if (!d) return;
+  const i = d.querySelector('i'); i.textContent = text; i.style.display = 'block';
+  clearTimeout(d.t); d.t = setTimeout(() => i.style.display = 'none', 5000);
 }
-function tree(x,z){const trunk=new THREE.Mesh(new THREE.CylinderGeometry(.18,.25,1.6,7),new THREE.MeshStandardMaterial({color:0x805b3b}));trunk.position.set(x,.8,z);scene.add(trunk);const leaves=new THREE.Mesh(new THREE.ConeGeometry(1.2,2.8,7),new THREE.MeshStandardMaterial({color:[0x3b9666,0x4da76b,0x2d8559][Math.floor(Math.random()*3)]}));leaves.position.set(x,2.65,z);scene.add(leaves)}
-function house(x,z,color){const base=new THREE.Mesh(new THREE.BoxGeometry(4.2,3.1,3.7),new THREE.MeshStandardMaterial({color,roughness:1}));base.position.set(x,1.55,z);scene.add(base);const roof=new THREE.Mesh(new THREE.ConeGeometry(3.2,1.8,4),new THREE.MeshStandardMaterial({color:0x914f4a,roughness:1}));roof.position.set(x,3.95,z);roof.rotation.y=Math.PI/4;roof.scale.set(1,1,0.85);scene.add(roof);const door=new THREE.Mesh(new THREE.BoxGeometry(.75,1.55,.08),new THREE.MeshStandardMaterial({color:0x684a39}));door.position.set(x, .78,z+1.89);scene.add(door);for(const dx of [-1.2,1.2]){const win=new THREE.Mesh(new THREE.BoxGeometry(.65,.65,.08),new THREE.MeshStandardMaterial({color:0xb7edff,emissive:0x376d88,emissiveIntensity:.18}));win.position.set(x+dx,1.95,z+1.9);scene.add(win)}}
-function resize(){if(!renderer)return;camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)}
-function animate(){
- requestAnimationFrame(animate);if(!renderer)return;const dt=Math.min(clock.getDelta(),.05);anim+=dt;
- if(player){
-  let f=(keys.KeyW||keys.ArrowUp?1:0)-(keys.KeyS||keys.ArrowDown?1:0)-joy.y;
-  let r=(keys.KeyD||keys.ArrowRight?1:0)-(keys.KeyA||keys.ArrowLeft?1:0)+joy.x;
-  const len=Math.hypot(f,r);if(len>1){f/=len;r/=len}
-  const speed=5.2*dt;const dx=(r*Math.cos(yaw)+f*Math.sin(yaw))*speed;const dz=(-f*Math.cos(yaw)+r*Math.sin(yaw))*speed;
-  player.position.x=clamp(player.position.x+dx,-28,28);player.position.z=clamp(player.position.z+dz,-32,32);
-  player.rotation.y=Math.atan2(dx,dz);if(len>.05){player.children[0].rotation.z=Math.sin(anim*10)*.04}
-  if(jumping>0){jumpVel-=18*dt;jumping+=jumpVel*dt;if(jumping<0){jumping=0;jumpVel=0}player.position.y=Math.max(0,jumping)}
-  if(waveUntil>performance.now()){player.children[2].rotation.z=Math.sin(anim*12)*.7}else if(player.children[2])player.children[2].rotation.z=0;
-  const lookX=player.position.x-Math.sin(yaw)*9,lookZ=player.position.z-Math.cos(yaw)*9;
-  camera.position.lerp(new THREE.Vector3(lookX,player.position.y+5.3,lookZ),.12);camera.lookAt(player.position.x,player.position.y+1.15,player.position.z);
-  if(performance.now()-lastSend>75){lastSend=performance.now();const msg={type:"move",x:player.position.x,z:player.position.z,yaw:player.rotation.y,wave:waveUntil>performance.now()?1:0};if(host){const p=players.get(myId);if(p){p.x=msg.x;p.z=msg.z;p.yaw=msg.yaw}broadcast({type:"move",player:{id:myId,...msg}},null)}else{for(const c of connections.values())send(c,msg)}}
- }
- for(const [id,p] of players){if(p.mesh){p.mesh.position.x+=(p.x-p.mesh.position.x)*.3;p.mesh.position.z+=(p.z-p.mesh.position.z)*.3;p.mesh.rotation.y=p.yaw||0;if(p.wave)p.mesh.children[2].rotation.z=Math.sin(anim*9)*.6;else p.mesh.children[2].rotation.z=0}}
- renderer.render(scene,camera);
+const me = { x: 0, y: 0, z: 6, vy: 0, ry: 0, g: avatar(S.color) };
+const others = {};
+mkLabel('me', S.name);
+function addOther(p) {
+  if (others[p.id]) return;
+  const o = others[p.id] = { name: p.name, g: avatar(p.color), x: p.x, y: p.y, z: p.z, ry: p.ry };
+  o.g.position.set(o.x, o.y, o.z); mkLabel(p.id, p.name); updCount();
 }
-window.addEventListener("keydown",e=>{keys[e.code]=true;if(["ArrowUp","ArrowDown","ArrowLeft","ArrowRight","Space"].includes(e.code))e.preventDefault();if(e.code==="Space")doJump()});
-window.addEventListener("keyup",e=>keys[e.code]=false);
-function doJump(){if(player&&jumping<=0){jumping=.01;jumpVel=7.2}}
-$("jumpBtn").onclick=doJump;
-$("waveBtn").onclick=()=>{waveUntil=performance.now()+1300;if(host)broadcast({type:"wave",id:myId});else for(const c of connections.values())send(c,{type:"wave"});toast("👋 You wave hello!")}
-$("sendBtn").onclick=sendChat;$("chatInput").addEventListener("keydown",e=>{if(e.key==="Enter")sendChat()});
-function sendChat(){const text=$("chatInput").value.trim();if(!text)return;$("chatInput").value="";addMessage(myName,text);const m={type:"chat",name:myName,text};if(host)broadcast(m);else for(const c of connections.values())send(c,m)}
-function addMessage(name,text){const el=document.createElement("div");el.className="msg";const b=document.createElement("b");b.textContent=(name||"Player")+": ";const span=document.createElement("span");span.textContent=String(text||"").slice(0,180);el.append(b,span);$("messages").append(el);while($("messages").children.length>40)$("messages").firstChild.remove();$("messages").scrollTop=$("messages").scrollHeight}
-$("copyBtn").onclick=async()=>{const code=host?hostId:hostId;try{await navigator.clipboard.writeText(code);toast("Invite code copied: "+code)}catch(e){toast("Share this code: "+code)}};
-$("leaveBtn").onclick=()=>{try{for(const c of connections.values())c.close();if(peer)peer.destroy()}catch(e){}location.reload()};
-const joyEl=$("joy"),knob=$("knob");let joyPointer=null;
-function setJoy(e){const r=joyEl.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2;let dx=e.clientX-cx,dy=e.clientY-cy;const max=37,d=Math.hypot(dx,dy);if(d>max){dx=dx/d*max;dy=dy/d*max}joy.x=dx/max;joy.y=dy/max;knob.style.transform=`translate(${dx}px,${dy}px)`}
-joyEl.addEventListener("pointerdown",e=>{joyPointer=e.pointerId;joyEl.setPointerCapture(joyPointer);setJoy(e)});joyEl.addEventListener("pointermove",e=>{if(e.pointerId===joyPointer)setJoy(e)});function resetJoy(){joyPointer=null;joy.x=joy.y=0;knob.style.transform="translate(0,0)"}joyEl.addEventListener("pointerup",resetJoy);joyEl.addEventListener("pointercancel",resetJoy);
-})();
-</script>
-</body></html>
+function delOther(id) { const o = others[id]; if (!o) return; scene.remove(o.g); labels[id].remove(); delete labels[id]; delete others[id]; updCount(); }
+
+// ---------- chat ----------
+let chatLog = [];
+try { chatLog = JSON.parse(localStorage.getItem('cozychat') || '[]'); } catch (e) {}
+function remember(n, t) { chatLog.push({ n, t }); if (chatLog.length > 200) chatLog.shift(); try { localStorage.setItem('cozychat', JSON.stringify(chatLog)); } catch (e) {} }
+function showHist(h) { $('log').replaceChildren(); h.forEach(x => logMsg(x.n, x.t)); }
+function logMsg(n, t) {
+  const d = document.createElement('div'), b = document.createElement('b');
+  b.textContent = n + ': '; d.append(b, t);
+  const L = $('log'); L.append(d); while (L.children.length > 100) L.firstChild.remove(); L.scrollTop = L.scrollHeight;
+}
+function sendChat(t) {
+  t = t.trim(); if (!t) return;
+  if (net) net({ t: 'chat', text: t }); else { logMsg(S.name, t); remember(S.name, t); say('me', t); }
+}
+const ci = $('chatin'); let typing = false;
+function openChat() { document.exitPointerLock && document.exitPointerLock(); ci.style.display = 'block'; ci.focus(); }
+ci.onfocus = () => typing = true;
+ci.onblur = () => { typing = false; ci.style.display = 'none'; };
+document.querySelectorAll('#emo .btn').forEach(b => b.onclick = () => sendChat(b.textContent));
+$('bchat').onclick = openChat;
+
+// ---------- network (peer-to-peer: first player in a room hosts) ----------
+let net = null, myId = null, hostMode = false, hostConn = null, netText = 'Connecting…';
+function updCount() { $('status').textContent = netText + ' · 👥 ' + (1 + Object.keys(others).length); }
+function setNet(t) { netText = t; updCount(); }
+$('status').onclick = () => {
+  const pl = $('plist'); if (pl.style.display === 'block') { pl.style.display = 'none'; return; }
+  pl.replaceChildren(...[S.name + ' (you)', ...Object.values(others).map(o => o.name || 'Player')].map(n => { const d = document.createElement('div'); d.textContent = '🟢 ' + n; return d; }));
+  pl.style.display = 'block';
+};
+const MAXB = 60 * 1024 * 1024;
+const send = o => { if (net) net(o); };
+const PREFIX = 'cozysandbox-', ROOM = 'main-lobby-k7x2';
+function handle(m) {
+  if (m.t === 'welcome') { myId = m.id; blocks.forEach(b => scene.remove(b)); blocks.clear(); m.players.forEach(addOther); m.blocks.forEach(b => setBlock(b[0], b[1], b[2], b[3])); }
+  else if (m.t === 'join') addOther(m);
+  else if (m.t === 'leave') delOther(m.id);
+  else if (m.t === 'state') { const o = others[m.id]; if (o) Object.assign(o, { x: m.x, y: m.y, z: m.z, ry: m.ry }); }
+  else if (m.t === 'chat') { logMsg(m.name, m.text); remember(m.name, m.text); say(m.id === myId ? 'me' : m.id, m.text); }
+  else if (m.t === 'hist') { chatLog = m.h.slice(-200); try { localStorage.setItem('cozychat', JSON.stringify(chatLog)); } catch (e) {} showHist(chatLog); }
+  else if (m.t === 'fch') tubeGotChunk(m);
+  else if (m.t === 'fnone') { delete dl[m.id]; setStat('The host does not have this video file right now.'); }
+  else if (m.t === 'block') setBlock(m.x, m.y, m.z, m.c);
+  else if (m.t === 'tubestate') { T = m.s; saveT(); tubeRender(); }
+}
+function connect() {
+  if (typeof Peer === 'undefined') { setNet('Solo (offline)'); return; }
+  setNet('Connecting…');
+  const peer = new Peer(PREFIX + ROOM);
+  peer.on('open', () => startHost(peer));
+  peer.on('error', e => { if (e.type === 'unavailable-id') startClient(); else setNet('Solo (offline)'); });
+}
+function startHost(peer) {
+  myId = 0; hostMode = true; let nid = 1; const peers = new Map();
+  setNet('🟢 Online (host)');
+  const bc = (o, ex) => peers.forEach(p => p.conn !== ex && p.conn.open && p.conn.send(o));
+  tubeBroadcast = () => bc({ t: 'tubestate', s: T });
+  const pub = p => ({ id: p.id, name: p.name, color: p.color, x: p.x, y: p.y, z: p.z, ry: p.ry });
+  net = o => {
+    if (o.t === 'state') bc({ t: 'state', id: 0, x: o.x, y: o.y, z: o.z, ry: o.ry });
+    else if (o.t === 'chat') { const m = { t: 'chat', id: 0, name: S.name, text: String(o.text).slice(0, 200) }; bc(m); handle(m); }
+    else if (o.t === 'block') bc(o);
+  };
+  peer.on('connection', conn => {
+    const p = { conn, id: nid++, name: 'Guest', color: '#ff9f5a', x: 0, y: 0, z: 6, ry: 0, joined: false };
+    peers.set(p.id, p);
+    conn.on('data', m => {
+      if (m.t === 'join') {
+        p.name = String(m.name || 'Guest').slice(0, 16);
+        if (/^#[0-9a-f]{6}$/i.test(m.color)) p.color = m.color;
+        p.joined = true;
+        conn.send({ t: 'welcome', id: p.id,
+          players: [{ id: 0, name: S.name, color: S.color, x: me.x, y: me.y, z: me.z, ry: me.ry }, ...[...peers.values()].filter(q => q !== p && q.joined).map(pub)],
+          blocks: [...blocks.values()].map(b => [b.userData.x, b.userData.y, b.userData.z, b.userData.c]) });
+        bc({ t: 'join', ...pub(p) }, conn); handle({ t: 'join', ...pub(p) }); conn.send({ t: 'hist', h: chatLog }); conn.send({ t: 'tubestate', s: T });
+      } else if (!p.joined) return;
+      else if (m.t === 'state') {
+        Object.assign(p, { x: +m.x || 0, y: +m.y || 0, z: +m.z || 0, ry: +m.ry || 0 });
+        const o = { t: 'state', ...pub(p) }; bc(o, conn); handle(o);
+      } else if (m.t === 'chat') {
+        const t = String(m.text || '').trim().slice(0, 200);
+        if (t) { const o = { t: 'chat', id: p.id, name: p.name, text: t }; bc(o); handle(o); }
+      } else if (m.t === 'fbeg') {
+        const sz = +m.size; if (!(sz > 0 && sz <= MAXB) || T.videos.length >= 40) return;
+        const th = String(m.thumb || '');
+        p.up = { id: String(m.id).slice(0, 20), title: String(m.title || 'Video').slice(0, 80), thumb: th.startsWith('data:image/jpeg') ? th.slice(0, 20000) : '', type: String(m.type || 'video/webm').slice(0, 40), size: sz, uid: String(m.uid || p.id).slice(0, 40), parts: [], got: 0 };
+      } else if (m.t === 'fch') {
+        const u = p.up; if (!u || u.id !== m.id || !m.d) return;
+        u.parts.push(m.d); u.got += m.d.byteLength || 0;
+        if (u.got > MAXB) { p.up = null; return; }
+        if (m.last) { p.up = null; hostStoreUpload(u, p.name); }
+      } else if (m.t === 'freq') { serveFile(conn, String(m.id)); }
+      else if (m.t === 'tube') {
+        tubeApply(m, String(m.uid || p.id).slice(0, 40), p.name);
+      } else if (m.t === 'block') {
+        const { x, y, z, c } = m;
+        if (![x, y, z].every(Number.isInteger) || y < 0 || y > 40 || Math.abs(x) > 70 || Math.abs(z) > 70) return;
+        if (c !== null && !(Number.isInteger(c) && c >= 0 && c < 8)) return;
+        setBlock(x, y, z, c); bc({ t: 'block', x, y, z, c }, conn);
+      }
+    });
+    conn.on('close', () => { peers.delete(p.id); if (p.joined) { bc({ t: 'leave', id: p.id }); handle({ t: 'leave', id: p.id }); } });
+  });
+}
+function startClient() {
+  const peer = new Peer();
+  const fail = () => { setNet('🔴 Disconnected, reconnecting…'); setTimeout(() => location.reload(), 3000); };
+  peer.on('error', fail);
+  peer.on('open', () => {
+    const conn = peer.connect(PREFIX + ROOM, { reliable: true }); hostConn = conn;
+    conn.on('open', () => { net = o => conn.open && conn.send(o); setNet('🟢 Online'); net({ t: 'join', name: S.name, color: S.color }); });
+    conn.on('data', handle); conn.on('close', fail); conn.on('error', fail);
+  });
+}
+
+// ---------- input ----------
+const keys = {}; let yaw = 0, pitch = .35, sel = 0;
+const bar = $('bar');
+PAL.forEach((c, i) => { const d = document.createElement('div'); d.className = 'sw'; d.style.background = '#' + c.toString(16).padStart(6, '0'); d.onclick = () => pick(i); bar.append(d); });
+function pick(i) { sel = i; [...bar.children].forEach((d, j) => d.classList.toggle('on', j === i)); }
+pick(0);
+
+addEventListener('keydown', e => {
+  if (typing) { if (e.key === 'Enter') { sendChat(ci.value); ci.value = ''; ci.blur(); } else if (e.key === 'Escape') ci.blur(); return; }
+  if (tubeOpen) { if (e.key === 'Escape') closeTube(); return; }
+  if (e.code === 'KeyT') { openTube(); return; }
+  if (e.key === 'Enter') { e.preventDefault(); openChat(); return; }
+  keys[e.code] = true;
+  if (/^Digit[1-8]$/.test(e.code)) pick(+e.code[5] - 1);
+});
+addEventListener('keyup', e => keys[e.code] = false);
+document.addEventListener('mousemove', e => {
+  if (document.pointerLockElement === R.domElement) { yaw -= e.movementX * .003 * S.sens; pitch = clamp(pitch + e.movementY * .003 * S.sens, -.2, 1.2); }
+});
+R.domElement.addEventListener('mousedown', e => {
+  if (mode() === 'mobile') return;
+  if (document.pointerLockElement !== R.domElement) { R.domElement.requestPointerLock(); return; }
+  act(e.button === 2);
+});
+R.domElement.addEventListener('contextmenu', e => e.preventDefault());
+
+// touch look (right side) + joystick
+let lt = null;
+R.domElement.addEventListener('touchstart', e => { const t = e.changedTouches[0]; lt = { id: t.identifier, x: t.clientX, y: t.clientY }; });
+R.domElement.addEventListener('touchmove', e => {
+  for (const t of e.changedTouches) if (lt && t.identifier === lt.id) {
+    yaw -= (t.clientX - lt.x) * .005 * S.sens; pitch = clamp(pitch + (t.clientY - lt.y) * .005 * S.sens, -.2, 1.2);
+    lt.x = t.clientX; lt.y = t.clientY;
+  }
+});
+R.domElement.addEventListener('touchend', () => lt = null);
+let jv = { x: 0, y: 0 }, jid = null; const joy = $('joy'), knob = $('knob');
+function jmove(t) {
+  const r = joy.getBoundingClientRect(); let dx = t.clientX - (r.left + 60), dy = t.clientY - (r.top + 60);
+  const l = Math.hypot(dx, dy), m = 50; if (l > m) { dx *= m / l; dy *= m / l; }
+  jv = { x: dx / m, y: dy / m }; knob.style.transform = `translate(${dx}px,${dy}px)`;
+}
+joy.addEventListener('touchstart', e => { jid = e.changedTouches[0].identifier; jmove(e.changedTouches[0]); });
+joy.addEventListener('touchmove', e => { for (const t of e.changedTouches) if (t.identifier === jid) jmove(t); });
+joy.addEventListener('touchend', () => { jid = null; jv = { x: 0, y: 0 }; knob.style.transform = ''; });
+$('bjump').onpointerdown = () => keys.Space = true; $('bjump').onpointerup = () => keys.Space = false;
+$('bplace').onclick = () => act(false); $('brem').onclick = () => act(true);
+
+// ---------- building ----------
+const ray = new THREE.Raycaster(); ray.far = 20;
+function edit(x, y, z, c) { setBlock(x, y, z, c); send({ t: 'block', x, y, z, c }); }
+function act(remove) {
+  ray.setFromCamera({ x: 0, y: 0 }, cam);
+  const h = ray.intersectObjects([...blocks.values(), grass], false)[0]; if (!h) return;
+  const o = h.object; let x, y, z;
+  if (o === grass) { if (remove) return; x = Math.floor(h.point.x); y = 0; z = Math.floor(h.point.z); }
+  else {
+    const u = o.userData; if (remove) { edit(u.x, u.y, u.z, null); return; }
+    const n = h.face.normal; x = u.x + n.x; y = u.y + n.y; z = u.z + n.z;
+  }
+  if (y < 0 || y > 40 || Math.hypot(x, z) > 60 || blocks.has(key(x, y, z))) return;
+  if (Math.floor(me.x) === x && Math.floor(me.z) === z && y >= Math.floor(me.y) && y <= Math.floor(me.y + 1.6)) return;
+  edit(x, y, z, sel);
+}
+
+// ---------- movement + physics ----------
+const solid = (x, y, z) => blocks.has(key(Math.floor(x), Math.floor(y), Math.floor(z)));
+function blocked(x, y, z) {
+  for (const a of [-.3, .3]) for (const b of [-.3, .3]) if (solid(x + a, y + .1, z + b) || solid(x + a, y + 1.2, z + b)) return true;
+  return false;
+}
+function topAt(x, z, y) { for (let yy = Math.floor(y + .3); yy >= 0; yy--) if (blocks.has(key(Math.floor(x), yy, Math.floor(z)))) return yy + 1; return 0; }
+function ground(x, z, y) { let g = 0; for (const a of [-.3, .3]) for (const b of [-.3, .3]) g = Math.max(g, topAt(x + a, z + b, y)); return g; }
+let pp = false, rr = false;
+function step(dt) {
+  let mx = 0, mz = 0, jump = keys.Space;
+  if (keys.KeyW || keys.ArrowUp) mz++; if (keys.KeyS || keys.ArrowDown) mz--;
+  if (keys.KeyD || keys.ArrowRight) mx++; if (keys.KeyA || keys.ArrowLeft) mx--;
+  mx += jv.x; mz -= jv.y;
+  const gp = navigator.getGamepads && navigator.getGamepads()[0];
+  if (gp) {
+    if (Math.abs(gp.axes[0]) > .15) mx += gp.axes[0]; if (Math.abs(gp.axes[1]) > .15) mz -= gp.axes[1];
+    if (Math.abs(gp.axes[2]) > .15) yaw -= gp.axes[2] * 2.5 * dt * S.sens;
+    if (Math.abs(gp.axes[3]) > .15) pitch = clamp(pitch + gp.axes[3] * 2 * dt * S.sens, -.2, 1.2);
+    jump = jump || gp.buttons[0].pressed;
+    const p = gp.buttons[7] && gp.buttons[7].pressed, q = gp.buttons[6] && gp.buttons[6].pressed;
+    if (p && !pp) act(false); if (q && !rr) act(true); pp = p; rr = q;
+  }
+  const l = Math.hypot(mx, mz); if (l > 1) { mx /= l; mz /= l; }
+  const s = Math.sin(yaw), c = Math.cos(yaw), sp = 5.5;
+  const dx = (-s * mz + c * mx) * sp * dt, dz = (-c * mz - s * mx) * sp * dt;
+  if (!blocked(me.x + dx, me.y, me.z)) me.x += dx;
+  if (!blocked(me.x, me.y, me.z + dz)) me.z += dz;
+  const rad = Math.hypot(me.x, me.z); if (rad > 62) { me.x *= 62 / rad; me.z *= 62 / rad; }
+  if (dx || dz) me.ry = Math.atan2(-dx, -dz);
+  const g = ground(me.x, me.z, me.y);
+  if (me.y <= g + .01 && me.vy <= 0) { me.y = g; me.vy = 0; if (jump) me.vy = 8; } else me.vy -= 22 * dt;
+  me.y += me.vy * dt; if (me.y < g) { me.y = g; me.vy = 0; }
+}
+
+// ---------- Cozy Tube (upload + record + watch, stored on devices) ----------
+let T = { videos: [] }, tubeOpen = false, tab = 1, cur = null, curUrl = null, pending = null, prevUrl = null, tubeBroadcast = () => {};
+const dl = {}, seen = new Set(), thumbs = {};
+try { const sv = JSON.parse(localStorage.getItem('cozytube') || 'null'); if (sv && sv.videos) T = sv; } catch (e) {}
+const saveT = () => { try { localStorage.setItem('cozytube', JSON.stringify(T)); } catch (e) {} };
+const myUid = (() => { try { let u = localStorage.getItem('cozyuid'); if (!u) { u = Math.random().toString(36).slice(2) + Date.now().toString(36); localStorage.setItem('cozyuid', u); } return u; } catch (e) { return Math.random().toString(36).slice(2); } })();
+const vidOf = id => T.videos.find(v => v.id === id);
+const cnt = (o, n) => Object.values(o).filter(x => x === n).length;
+const setStat = t => { $('tstat').textContent = t; };
+
+// video files live in IndexedDB on each device
+const idb = new Promise((res, rej) => { try { const r = indexedDB.open('cozytube', 1); r.onupgradeneeded = () => r.result.createObjectStore('f'); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); } catch (e) { rej(e); } });
+const idbOp = (mode, fn) => idb.then(d => new Promise((res, rej) => { const t = d.transaction('f', mode), r = fn(t.objectStore('f')); t.oncomplete = () => res(r.result); t.onerror = () => rej(t.error); }));
+const mem = {}; // in-memory backup in case the browser blocks IndexedDB
+const idbPut = (k, v) => { mem[k] = v; return idbOp('readwrite', s => s.put(v, k)); };
+const idbGet = k => mem[k] ? Promise.resolve(mem[k]) : idbOp('readonly', s => s.get(k));
+const idbDel = k => { delete mem[k]; return idbOp('readwrite', s => s.delete(k)); };
+
+// 3D TV in the world shows the newest upload
+const tvC = document.createElement('canvas'); tvC.width = 512; tvC.height = 288;
+const tvTex = new THREE.CanvasTexture(tvC);
+mk(new THREE.BoxGeometry(5, 3, .3), std(0x222222), 0, 2.2, -10);
+mk(new THREE.BoxGeometry(.5, 1, .4), std(0x222222), 0, .5, -10.1);
+const tvScr = new THREE.Mesh(new THREE.PlaneGeometry(4.6, 2.6), new THREE.MeshBasicMaterial({ map: tvTex })); tvScr.position.set(0, 2.2, -9.84); scene.add(tvScr);
+function drawTV() {
+  const c = tvC.getContext('2d'), v = T.videos[T.videos.length - 1];
+  c.fillStyle = '#1a1f3a'; c.fillRect(0, 0, 512, 288); c.fillStyle = '#fff'; c.textAlign = 'center';
+  c.font = 'bold 38px sans-serif'; c.fillText('📺 Cozy Tube', 256, 55);
+  if (v && v.thumb) { let im = thumbs[v.id]; if (!im) { im = thumbs[v.id] = new Image(); im.onload = drawTV; im.src = v.thumb; } if (im.complete && im.naturalWidth) c.drawImage(im, 176, 75, 160, 90); }
+  c.font = '24px sans-serif'; c.fillText(v ? 'Newest: ' + v.title.slice(0, 26) : 'No videos yet', 256, 205);
+  c.fillText(v ? '👍 ' + cnt(v.votes, 1) + '   👁 ' + v.views : 'Press T to upload or record', 256, 245);
+  tvTex.needsUpdate = true;
+}
+
+// ----- file transfer between players -----
+async function sendFile(conn, id, blob, type, onProg) {
+  const N = 48 * 1024, total = Math.max(1, Math.ceil(blob.size / N));
+  for (let i = 0; i < total; i++) {
+    while (conn.dataChannel && conn.dataChannel.bufferedAmount > 1e6) await new Promise(r => setTimeout(r, 25));
+    if (!conn.open) return false;
+    const d = await blob.slice(i * N, (i + 1) * N).arrayBuffer();
+    conn.send({ t: 'fch', id, i, n: total, last: i === total - 1, type, d });
+    if (onProg) onProg(Math.round((i + 1) / total * 100));
+  }
+  return true;
+}
+async function serveFile(conn, id) {
+  let b = null; try { b = await idbGet(id); } catch (e) {}
+  if (!b) { conn.send({ t: 'fnone', id }); return; }
+  await sendFile(conn, id, b, b.type);
+}
+async function hostStoreUpload(u, name) {
+  const blob = new Blob(u.parts, { type: u.type });
+  try { await idbPut(u.id, blob); } catch (e) {}
+  tubeApply({ a: 'add', id: u.id, title: u.title, thumb: u.thumb, type: u.type, size: u.size }, u.uid, name, true);
+}
+function tubeGotChunk(m) {
+  const d = dl[m.id]; if (!d) return;
+  d.parts[m.i] = m.d; setStat('Downloading ' + Math.round((m.i + 1) / m.n * 100) + '%…');
+  if (m.last) {
+    const b = new Blob(d.parts, { type: m.type || 'video/webm' }); delete dl[m.id];
+    idbPut(m.id, b).catch(() => {});
+    if (cur === m.id) { setStat(''); const i = vidOf(m.id); playBlob(b, i && i.type || m.type); }
+  }
+}
+
+// ----- shared state (host is the authority) -----
+function tubeApply(a, uid, name, trusted) {
+  if (a.a === 'add') {
+    if (!trusted || vidOf(a.id) || T.videos.length >= 40) return;
+    T.videos.push({ id: a.id, title: a.title, thumb: a.thumb || '', type: a.type, size: a.size, by: name, uid, t: Date.now(), views: 0, votes: {}, comments: [] });
+  } else {
+    const v = vidOf(a.id); if (!v) return;
+    if (a.a === 'view') v.views++;
+    else if (a.a === 'vote') { const n = a.v === 1 ? 1 : -1; if (v.votes[uid] === n) delete v.votes[uid]; else v.votes[uid] = n; }
+    else if (a.a === 'comment') {
+      const t = String(a.text || '').trim().slice(0, 200); if (!t) return;
+      v.comments.push({ id: Math.random().toString(36).slice(2, 8), uid, name, text: t, t: Date.now(), likes: {} }); if (v.comments.length > 100) v.comments.shift();
+    }
+    else if (a.a === 'clike') { const c = v.comments.find(c => c.id === a.cid); if (c) { if (c.likes[uid]) delete c.likes[uid]; else c.likes[uid] = 1; } }
+    else if (a.a === 'cdel') v.comments = v.comments.filter(c => !(c.id === a.cid && c.uid === uid));
+    else if (a.a === 'rm') { if (v.uid !== uid) return; T.videos = T.videos.filter(x => x !== v); idbDel(v.id).catch(() => {}); }
+    else return;
+  }
+  saveT(); tubeBroadcast(); tubeRender();
+}
+function tubeSend(a) { a.t = 'tube'; a.uid = myUid; if (hostMode || !net) tubeApply(a, myUid, S.name); else send(a); }
+
+// ----- watching -----
+function playBlob(b, type) {
+  if (curUrl) URL.revokeObjectURL(curUrl);
+  if (type && b.type !== type) b = new Blob([b], { type });
+  curUrl = URL.createObjectURL(b); const v = $('tvid'); v.src = curUrl; v.style.display = 'block'; v.load();
+  v.play().catch(() => setStat('Tap ▶ on the video to play it.'));
+}
+async function watch(id) {
+  $('tube').querySelector('.box').scrollTop = 0;
+  cur = id; tubeSend({ a: 'view', id }); setStat('Loading video…'); $('tvid').pause();
+  const info = vidOf(id); let b = null; try { b = await idbGet(id); } catch (e) {}
+  if (b) { setStat(''); playBlob(b, info && info.type); }
+  else if (hostMode || !net) { $('tvid').style.display = 'none'; setStat('This video file is not on this device. Ask the uploader to open the game.'); }
+  else if (!dl[id]) { $('tvid').style.display = 'none'; setStat('Downloading 0%…'); dl[id] = { parts: [] }; hostConn.send({ t: 'freq', id }); setTimeout(() => { if (dl[id] && !dl[id].parts.length) { delete dl[id]; setStat('The host did not respond. Make sure they are online.'); } }, 10000); }
+  tubeRender();
+}
+
+// ----- recording + uploading -----
+let rec = null, recT = 0, recTimer = null;
+function toggleRec() {
+  if (rec) { rec.stop(); return; }
+  if (!window.MediaRecorder || !R.domElement.captureStream) { alert('Recording is not supported in this browser. You can still upload video files.'); return; }
+  const mt = ['video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm', 'video/mp4'].find(t => MediaRecorder.isTypeSupported(t)) || '';
+  const chunks = [], opts = { videoBitsPerSecond: 2e6 }; if (mt) opts.mimeType = mt;
+  rec = new MediaRecorder(R.domElement.captureStream(30), opts);
+  rec.ondataavailable = e => e.data.size && chunks.push(e.data);
+  rec.onstop = () => {
+    clearInterval(recTimer); rec = null; $('brec').textContent = '🔴';
+    const blob = new Blob(chunks, { type: (mt || 'video/webm').split(';')[0] });
+    if (blob.size) sniffType(blob).then(t => setPending(blob, 'Gameplay ' + new Date().toLocaleDateString(), t)); else alert('Nothing was recorded.');
+  };
+  rec.start(1000); recT = 0; $('brec').textContent = '⏹ 0s';
+  recTimer = setInterval(() => { recT++; $('brec').textContent = '⏹ ' + recT + 's'; if (recT >= 120) rec.stop(); }, 1000);
+}
+async function sniffType(blob) {
+  try {
+    const u = new Uint8Array(await blob.slice(0, 16).arrayBuffer()), str = String.fromCharCode(...u.slice(4, 12));
+    if (u[0] === 0x1A && u[1] === 0x45 && u[2] === 0xDF && u[3] === 0xA3) return 'video/webm';
+    if (str.startsWith('ftypqt')) return 'video/quicktime';
+    if (str.startsWith('ftyp')) return 'video/mp4';
+  } catch (e) {}
+  return (blob.type || 'video/mp4').split(';')[0];
+}
+function setPending(blob, name, type) {
+  if (blob.size > MAXB) { alert('That video is over 60 MB. Pick a shorter one.'); return; }
+  pending = { blob, type }; if (prevUrl) URL.revokeObjectURL(prevUrl);
+  prevUrl = URL.createObjectURL(blob); $('tprev').src = prevUrl; $('ttitle').value = name; openTube();
+}
+function makeThumb(blob) {
+  return new Promise(res => {
+    const u = URL.createObjectURL(blob), v = document.createElement('video'); v.muted = true; v.playsInline = true; v.preload = 'auto';
+    const done = t => { clearTimeout(to); URL.revokeObjectURL(u); res(t || ''); }, to = setTimeout(() => done(''), 4000);
+    v.onloadeddata = () => { v.currentTime = Math.min(.5, (v.duration || 1) / 2); };
+    v.onseeked = () => { try { const c = document.createElement('canvas'); c.width = 96; c.height = 54; c.getContext('2d').drawImage(v, 0, 0, 96, 54); done(c.toDataURL('image/jpeg', .5)); } catch (e) { done(''); } };
+    v.onerror = () => done(''); v.src = u;
+  });
+}
+async function postVideo() {
+  const pd = pending; if (!pd) return;
+  const title = ($('ttitle').value.trim() || 'My video').slice(0, 80), id = Date.now().toString(36) + Math.random().toString(36).slice(2, 5), type = pd.type || 'video/mp4';
+  pending = null; $('tprev').pause(); $('tnew').style.display = 'none'; setStat('Preparing…');
+  const thumb = await makeThumb(pd.blob);
+  try { await idbPut(id, pd.blob); } catch (e) {}
+  if (hostMode || !net) { tubeApply({ a: 'add', id, title, thumb, type, size: pd.blob.size }, myUid, S.name, true); setStat('Posted!'); }
+  else {
+    hostConn.send({ t: 'fbeg', id, title, thumb, type, size: pd.blob.size, uid: myUid });
+    const ok = await sendFile(hostConn, id, pd.blob, type, p => setStat('Uploading ' + p + '%…'));
+    setStat(ok ? 'Posted!' : 'Upload failed. Try again.');
+  }
+  tubeRender();
+}
+
+// ----- panel UI -----
+const el = (tag, props = {}, ...kids) => { const e = document.createElement(tag); Object.assign(e, props); kids.forEach(k => e.append(k)); return e; };
+const tbtn = (text, fn, on) => el('button', { className: 'btn' + (on ? ' on' : ''), textContent: text, onclick: fn });
+function tubeRender() {
+  drawTV();
+  T.videos.forEach(x => { if (!seen.has(x.id)) { seen.add(x.id); if (x.uid !== myUid && !tubeOpen && Date.now() - x.t < 60000) logMsg('📺', x.by + ' uploaded “' + x.title + '” (press T)'); } });
+  if (!tubeOpen) return;
+  let v = cur && vidOf(cur);
+  if (cur && !v) { cur = null; $('tvid').pause(); $('tvid').style.display = 'none'; }
+  $('tnew').style.display = pending ? 'grid' : 'none';
+  const vb = d => tbtn((d === 1 ? '👍 ' : '👎 ') + cnt(v.votes, d), () => tubeSend({ a: 'vote', id: v.id, v: d }), v.votes[myUid] === d);
+  $('tinfo').replaceChildren(...(v ? [
+    el('b', { textContent: v.title }), el('div', { textContent: `👁 ${v.views} views · uploaded by ${v.by}`, style: 'font-size:12px;opacity:.8;margin:2px 0 6px' }),
+    el('div', { className: 'row' }, vb(1), vb(-1), ...(v.uid === myUid ? [tbtn('🗑 Delete', () => tubeSend({ a: 'rm', id: v.id }))] : []))
+  ] : []));
+  $('ttab1').classList.toggle('on', tab === 1); $('ttab2').classList.toggle('on', tab === 2);
+  $('ttab1').textContent = '🎬 Videos (' + T.videos.length + ')';
+  $('tcrow').style.display = tab === 2 && v ? 'flex' : 'none';
+  const L = $('tlist'); L.replaceChildren();
+  if (tab === 1) {
+    if (!T.videos.length) L.append(el('div', { textContent: 'No videos yet. Upload one or record your gameplay!' }));
+    T.videos.slice().reverse().forEach(x => L.append(el('div', { className: 'item', style: 'cursor:pointer', onclick: () => watch(x.id) },
+      x.thumb ? el('img', { src: x.thumb, width: 64, height: 36, style: 'border-radius:6px;flex-shrink:0' }) : el('div', { textContent: '🎬', style: 'flex-shrink:0' }),
+      el('div', { style: 'flex:1' }, el('b', { textContent: x.title }), el('div', { textContent: `👁 ${x.views} · 👍 ${cnt(x.votes, 1)} · 👎 ${cnt(x.votes, -1)} · ${x.comments.length} comments · ${x.by}`, style: 'font-size:12px;opacity:.8' })))));
+  } else if (!v) L.append(el('div', { textContent: 'Pick a video first to see its comments.' }));
+  else if (!v.comments.length) L.append(el('div', { textContent: 'No comments yet. Be the first!' }));
+  else v.comments.slice().reverse().forEach(c => L.append(el('div', { className: 'item' },
+    el('div', {}, el('b', { textContent: c.name + ': ' }), c.text),
+    el('div', { className: 'row', style: 'flex-shrink:0' }, tbtn('👍 ' + Object.keys(c.likes).length, () => tubeSend({ a: 'clike', id: v.id, cid: c.id }), c.likes[myUid]),
+      ...(c.uid === myUid ? [tbtn('🗑', () => tubeSend({ a: 'cdel', id: v.id, cid: c.id }))] : [])))));
+}
+$('tvid').onerror = () => { const i = cur && vidOf(cur); setStat('This device cannot play that video (' + (i ? i.type : 'unknown format') + '). Try uploading an .mp4.'); };
+function openTube() { document.exitPointerLock && document.exitPointerLock(); tubeOpen = true; $('tube').style.display = 'flex'; tubeRender(); }
+function closeTube() { tubeOpen = false; $('tvid').pause(); $('tprev').pause(); $('tube').style.display = 'none'; }
+$('btube').onclick = openTube; $('tclose').onclick = closeTube; $('brec').onclick = toggleRec;
+$('trec').onclick = () => { closeTube(); toggleRec(); };
+$('tup').onclick = () => $('tfile').click();
+$('tfile').onchange = e => { const f = e.target.files[0]; e.target.value = ''; if (f) sniffType(f).then(t => setPending(f, f.name.replace(/\.[^.]+$/, ''), t)); };
+$('tgo').onclick = postVideo;
+$('tdis').onclick = () => { pending = null; $('tprev').pause(); tubeRender(); };
+$('tpost').onclick = () => { const t = $('tcin').value.trim(); if (t && cur) { tubeSend({ a: 'comment', id: cur, text: t }); $('tcin').value = ''; } };
+$('tcin').onkeydown = e => { if (e.key === 'Enter') $('tpost').click(); };
+$('ttab1').onclick = () => { tab = 1; tubeRender(); }; $('ttab2').onclick = () => { tab = 2; tubeRender(); };
+drawTV(); showHist(chatLog);
+
+// ---------- main loop ----------
+const sky = new THREE.Color(), skyDay = new THREE.Color(0x87ceeb), skyNight = new THREE.Color(0x3b4a85), v = new THREE.Vector3(), tmp = new THREE.Vector3();
+let last = performance.now(), acc = 0;
+function loop(now) {
+  requestAnimationFrame(loop);
+  const dt = Math.min((now - last) / 1000, .05); last = now;
+  step(dt);
+  me.g.position.set(me.x, me.y, me.z); me.g.rotation.y = me.ry;
+  for (const id in others) { const o = others[id]; o.g.position.lerp(tmp.set(o.x, o.y, o.z), Math.min(1, dt * 10)); o.g.rotation.y = o.ry; }
+  if ((acc += dt) > .1) { acc = 0; send({ t: 'state', x: me.x, y: me.y, z: me.z, ry: me.ry }); }
+
+  // shared day/night cycle (5 min), same for everyone
+  const a = (Date.now() / 1000 / 300 % 1) * Math.PI * 2, sa = Math.sin(a), day = clamp(sa * 2 + .8, 0, 1);
+  sun.position.set(me.x + Math.cos(a) * 50, Math.max(sa, .05) * 50 + 5, me.z + 30); sun.target.position.set(me.x, 0, me.z);
+  sun.intensity = .4 + day * .8; hemi.intensity = .5 + day * .4;
+  sky.copy(skyNight).lerp(skyDay, day); scene.background = sky; scene.fog.color.copy(sky);
+  water.position.y = -.3 + Math.sin(now / 1000) * .03;
+
+  const tx = me.x, ty = me.y + 1.5, tz = me.z, d = 6, cp = Math.cos(pitch);
+  cam.position.set(tx + Math.sin(yaw) * cp * d, Math.max(ty + Math.sin(pitch) * d, .3), tz + Math.cos(yaw) * cp * d);
+  cam.lookAt(tx, ty, tz);
+
+  for (const id in labels) {
+    const o = id === 'me' ? me : others[id]; if (!o) continue;
+    v.set(o.x, o.y + 1.9, o.z).project(cam);
+    const el = labels[id];
+    if (v.z > 1) el.style.display = 'none';
+    else { el.style.display = 'block'; el.style.left = (v.x * .5 + .5) * innerWidth + 'px'; el.style.top = (-v.y * .5 + .5) * innerHeight + 'px'; }
+  }
+  R.render(scene, cam);
+}
+
+// ---------- settings ----------
+$('bset').onclick = () => {
+  document.exitPointerLock && document.exitPointerLock();
+  $('sname').value = S.name; $('scol').value = S.color; $('smode').value = S.mode; $('ssens').value = S.sens;
+  $('ssh').value = S.shadows ? '1' : '0'; $('sfog').value = S.fog;
+  $('set').style.display = 'flex';
+};
+$('sclose').onclick = () => $('set').style.display = 'none';
+$('ssave').onclick = () => {
+  S = { name: $('sname').value.trim() || S.name, color: $('scol').value, mode: $('smode').value, sens: +$('ssens').value,
+        shadows: $('ssh').value === '1', fog: +$('sfog').value };
+  try { localStorage.setItem('cozy', JSON.stringify(S)); } catch (e) {}
+  location.reload();
+};
+
+updCount();
+requestAnimationFrame(loop);
+try { connect(); } catch (e) { setNet('Solo (offline)'); }
+</script></body></html>
